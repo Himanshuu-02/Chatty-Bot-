@@ -12,12 +12,12 @@ const ChatSidebar = ({ chats, selectChat, deleteConversation, startNewConversati
     <div className="relative">
       <button
         onClick={toggleSidebar}
-        className="md:hidden p-2 bg-[#ECDFCC] text-gray-800 rounded hover:bg-[#e2d9cc] fixed top-4 right-4 z-50"
+        className="md:hidden p-2 bg-[#ECDFCC] text-gray-800 rounded hover:bg-[#e2d9cc] fixed top-4 right-4 z-50 "
       >
         {isSidebarOpen ? <FaTimes /> : <FaBars />}
       </button>
       <div className={`chat-sidebar w-2/3 sm:w-full h-full border-r p-4 fixed md:relative bg-[#1e201e] md:block ${isSidebarOpen ? 'block' : 'hidden'}`}>
-        <h2 className="text-xl mb-4">ChattyBot</h2>
+        <h2 className="text-xl mb-4">💬 ChattyBot</h2>
         <ul>
           {chats.length === 0 ? (
             <li>No conversations yet</li>

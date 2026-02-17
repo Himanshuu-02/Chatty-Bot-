@@ -30,7 +30,7 @@ const ChatWindow = ({ chat = [], onSendMessage, conversationId }) => {
     <div className="chat-window flex flex-col flex-1 p-4">
       <div className="messages flex-grow mb-4 overflow-y-auto">
         {chat.length === 0 ? (
-          <div className="text-center text-gray-200 font-bold">What can I help with?</div>
+          <div className="text-center text-gray-200 font-bold text-6">Hey How can i help you 👋🏻?</div>
         ) : (
           chat.map((msg, index) => (
             <div key={index} className="message-pair">
