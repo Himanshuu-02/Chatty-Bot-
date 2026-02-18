@@ -3,6 +3,8 @@ import axios from 'axios';
 import ChatSidebar from './ChatSidebar';
 import ChatWindow from './ChatWindow';
 
+const BASE_URL = "http://127.0.0.1:8000";
+
 const ChatApp = () => {
   const [chats, setChats] = useState(() => {
     const storedChats = localStorage.getItem('chats');
@@ -23,12 +25,15 @@ const ChatApp = () => {
       try {
         const currentConversationId = conversations[selectedChatIndex]?.conversationId;
         if (currentConversationId) {
-          const response = await axios.get(`http://localhost:5001/history?user_id=${userId}&conversation_id=${currentConversationId}`);
+    const response = await axios.get(`${BASE_URL}/history`, {
+  params: { conversation_id: currentConversationId }
+});
+
           const data = response.data;
 
           const formattedData = data.map(chat => ({
             user: chat.user_message,
-            bot: chat.bot_response
+            bot: chat.ai_reply
           }));
 
           const updatedChats = [...chats];
@@ -62,7 +67,7 @@ const ChatApp = () => {
     }
 
     try {
-        const response = await axios.post('http://localhost:5001/chat', {
+        const response = await axios.post(`${BASE_URL}/chat`, {
             message: message,
             user_id: userId,
             conversation_id: currentConversationId
@@ -72,7 +77,7 @@ const ChatApp = () => {
             }
         });
 
-        const botResponse = response.data[0]?.text || 'No response';
+        const botResponse = response.data.reply || 'No response';
         updatedChats[selectedChatIndex].push({ bot: botResponse });
         setChats([...updatedChats]);
         localStorage.setItem('chats', JSON.stringify(updatedChats)); // Store chats in localStorage
@@ -82,26 +87,42 @@ const ChatApp = () => {
     }
   };
 
-  const startNewConversation = async () => {
-    try {
-        const response = await axios.post('http://localhost:5001/new_conversation', {
-            user_id: userId
-        });
-        const newConversationId = response.data.conversation_id;  // Save the conversation ID
-        const newConversations = [...conversations, { conversationId: newConversationId }];
-        setConversations(newConversations);  // Update the conversations state
-        localStorage.setItem('conversations', JSON.stringify(newConversations));  // Store conversations in localStorage
-        const newChats = [...chats, []]; // Add a new empty chat array
-        setChats(newChats);
-        localStorage.setItem('chats', JSON.stringify(newChats)); // Store chats in localStorage
-        const newIndex = newConversations.length - 1;
-        setSelectedChatIndex(newIndex); // Select the new conversation
-        localStorage.setItem('selectedChatIndex', newIndex); // Store selectedChatIndex in localStorage
-        console.log('New conversation started:', newConversationId);
-    } catch (error) {
-        console.error('Error starting a new conversation:', error);
-    }
-  };
+  // const startNewConversation = async () => {
+  //   try {
+  //       const response = await axios.post(`${BASE_URL}/new_conversation`, {
+  //           user_id: userId
+  //       });
+  //       const newConversationId = response.data.conversation_id;  // Save the conversation ID
+  //       const newConversations = [...conversations, { conversationId: newConversationId }];
+  //       setConversations(newConversations);  // Update the conversations state
+  //       localStorage.setItem('conversations', JSON.stringify(newConversations));  // Store conversations in localStorage
+  //       const newChats = [...chats, []]; // Add a new empty chat array
+  //       setChats(newChats);
+  //       localStorage.setItem('chats', JSON.stringify(newChats)); // Store chats in localStorage
+  //       const newIndex = newConversations.length - 1;
+  //       setSelectedChatIndex(newIndex); // Select the new conversation
+  //       localStorage.setItem('selectedChatIndex', newIndex); // Store selectedChatIndex in localStorage
+  //       console.log('New conversation started:', newConversationId);
+  //   } catch (error) {
+  //       console.error('Error starting a new conversation:', error);
+  //   }
+  // };
+
+  const startNewConversation = () => {
+    const newConversationId = Date.now().toString();
+
+    const newConversations = [...conversations, { conversationId: newConversationId }];
+    setConversations(newConversations);
+    localStorage.setItem('conversations', JSON.stringify(newConversations));
+
+    const newChats = [...chats, []];
+    setChats(newChats);
+    localStorage.setItem('chats', JSON.stringify(newChats));
+
+    const newIndex = newConversations.length - 1;
+    setSelectedChatIndex(newIndex);
+    localStorage.setItem('selectedChatIndex', newIndex);
+};
 
   const deleteConversation = async (index) => {
     const conversationId = conversations[index]?.conversationId;
@@ -112,12 +133,8 @@ const ChatApp = () => {
     }
 
     try {
-        await axios.delete(`http://localhost:5001/conversation`, {
-            data: {
-                user_id: userId,
-                conversation_id: conversationId
-            }
-        });
+     await axios.delete(`${BASE_URL}/delete_conversation/${conversationId}`);
+
 
         const newConversations = conversations.filter((_, i) => i !== index);
         const newChats = chats.filter((_, i) => i !== index);
