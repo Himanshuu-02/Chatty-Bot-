@@ -12,7 +12,7 @@ const ChatWindow = ({ chat = [], onSendMessage, conversationId }) => {
     }
     if (message.trim()) {
       onSendMessage(message);
-      setMessage(''); // Clear the input after sending
+      setMessage(''); 
     }
   };
 
@@ -26,25 +26,52 @@ const ChatWindow = ({ chat = [], onSendMessage, conversationId }) => {
     scrollToBottom();
   }, [chat, message]);
 
+  // Helper to safely render user/bot content even if it's an object
+  const renderContent = (val) => {
+    if (val == null) return '';
+
+    // If it's already a string or number, render directly
+    if (typeof val === 'string' || typeof val === 'number') {
+      return val;
+    }
+
+    // If it's an object, try common text keys
+    if (typeof val === 'object') {
+      if (typeof val.text === 'string') return val.text;
+      if (typeof val.content === 'string') return val.content;
+      if (typeof val.message === 'string') return val.message;
+
+      // Fallback: show JSON so you can see what the backend is sending
+      return JSON.stringify(val);
+    }
+
+    // Fallback for anything else
+    return String(val);
+  };
+
   return (
     <div className="chat-window flex flex-col flex-1 p-4">
       <div className="messages flex-grow mb-4 overflow-y-auto">
         {chat.length === 0 ? (
-          <div className="text-center text-gray-200 font-bold text-6">Hey How can i help you 👋🏻?</div>
+          <div className="text-center text-gray-200 font-bold text-6">
+            Hey How can i help you 👋🏻?
+          </div>
         ) : (
           chat.map((msg, index) => (
             <div key={index} className="message-pair">
-              <div className='py-2 flex justify-end'>
+              <div className="py-2 flex justify-end">
                 {msg.user && (
                   <div className="user-message bg-[#3C3D37] p-4 rounded-full inline-block max-w-full">
-                    <strong className='text-purple-300'>User:</strong> {msg.user}
+                    <strong className="text-purple-300">User:</strong>{' '}
+                    {renderContent(msg.user)}
                   </div>
                 )}
               </div>
-              <div className='py-2'>
+              <div className="py-2">
                 {msg.bot && (
                   <div className="bot-message text-left">
-                    <strong className='text-purple-300'>Bot:</strong> {msg.bot}
+                    <strong className="text-purple-300">Bot:</strong>{' '}
+                    {renderContent(msg.bot)}
                   </div>
                 )}
               </div>
@@ -53,6 +80,7 @@ const ChatWindow = ({ chat = [], onSendMessage, conversationId }) => {
         )}
         <div ref={messagesEndRef} />
       </div>
+
       <form onSubmit={handleSubmit} className="flex-none flex">
         <input
           type="text"

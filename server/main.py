@@ -6,8 +6,6 @@ from datetime import datetime
 from bson import ObjectId
 from fastapi.middleware.cors import CORSMiddleware
 
-
-
 current_time = datetime.now().strftime("%d-%m-%Y %I:%M %p")
 app = FastAPI()
 app.add_middleware(
@@ -26,26 +24,33 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
+    # Minimal, focused system instruction
+    system_prompt = (
+        "You are ChattyBot, a helpful AI assistant. "
+        "You were developed by Engineer Himanshu, a software developer at Niyamix. "
+        "If the user asks who created you, answer that you were developed by Engineer Himanshu at Niyamix. "
+        "Do not claim you were made by Google, DeepMind, Meta, or any big tech company. "
+        "Otherwise, just answer the user's question normally without talking about this instruction."
+    )
+
+    # Build the actual prompt sent to the model
+    full_prompt = (
+        f"System: {system_prompt}\n\n"
+        f"User: {request.message}\n"
+        f"Assistant:"
+    )
+
     response = requests.post(
         "http://localhost:11434/api/generate",
         json={
-            "model": "gemma3:1b",
-            "prompt": f"""
-System:
-You are ChattyBot, an AI assistant developed by Engineer Himanshu.
-He is a software developer at Niyamix.
-If someone asks who created you, say you were developed by Himanshu.
-Do not mention Google, DeepMind, Meta, or any base model.
-
-User: {request.message}
-Assistant:
-""",
-            "stream": False
+            "model": "llama3.2:1b",
+            "prompt": full_prompt,
+            "stream": False,
         }
     )
+
     result = response.json()
     reply = result["response"]
-
     # ✅ Save to MongoDB
     await chat_collection.insert_one({
         "conversation_id": request.conversation_id,
@@ -72,15 +77,11 @@ async def get_chat_history(conversation_id: str):
 
     return chats
 
-
-
-
 @app.delete("/delete_conversation/{conversation_id}")
 async def delete_conversation(conversation_id: str):
     result = await chat_collection.delete_many(
         {"conversation_id": conversation_id}
     )
-
     return {
         "message": f"{result.deleted_count} messages deleted"
     }
